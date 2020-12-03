@@ -25,27 +25,28 @@ history_points = 50
 
  
 stocks = google
-
-print(len(stocks))
  
  
 stocks.drop(columns = ['Date'], inplace = True, axis = 1)
  
 test_split = 0.6 # the percent of data to be used for testing
 n = int(stocks.shape[0] * test_split)
+
+decomposition = seasonal_decompose(stocks['Adj Close'], period = 365)
+season = decomposition.seasonal
+
+for i in range(len(season)):
+    stocks['Adj Close'][i] -= season[i] 
  
 train_data = stocks[:n]
 
-decomposition = seasonal_decompose(stocks['Adj Close'], period = 365)
-decomposition.seasonal.plot()
-plt.show() 
+
 
  
 #normalise data so that various columns will have equal weight
 normaliser = preprocessing.MinMaxScaler()
 normalised_data = normaliser.fit_transform(train_data)
 
-print(len(normalised_data))
 
 # print(normalised_data[:,5])
 
@@ -99,7 +100,6 @@ unscaled_y_test = next_day_open_values_test
 exponential_moving_average = [] #factors in more weight to recent data rather than a simple moving average which weighs everything equally (not good for stock data )
  
 multiplier = 2.0 / 51
-print(ohlcv_train)
 
 sma = np.mean(ohlcv_train[0])
  
