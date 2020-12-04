@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from pandas_datareader import data
+from pandas_datareader import data as web
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
 from sklearn import preprocessing
@@ -14,17 +14,25 @@ end_date = datetime(2020, 8, 31)
  
 dataset = []
 test = []
-
-DAYS = 1510 #1762   #original is 2518
+df = web.DataReader("C31.SI", 'yahoo', start_date, end_date)
+ 
+#invoke to_csv for df dataframe object from 
+#DataReader method in the pandas_datareader library
+ 
+#..\first_yahoo_prices_to_csv_demo.csv must not
+#be open in another app, such as Excel
+ 
+df.to_csv('capital.csv')
+DAYS = 1234 #1762   #original is 2518 #google is 1510
 
 #pulling of google data from csv file
-google = pd.read_csv('D:/didi/ml/stock-project/google_stocks_data.csv')
+capital = pd.read_csv('D:/didi/ml/stock-project/capital.csv')
 
  
 history_points = 50
 
  
-stocks = google
+stocks = capital
  
  
 stocks.drop(columns = ['Date'], inplace = True, axis = 1)
@@ -32,12 +40,19 @@ stocks.drop(columns = ['Date'], inplace = True, axis = 1)
 test_split = 0.6 # the percent of data to be used for testing
 n = int(stocks.shape[0] * test_split)
 
-decomposition = seasonal_decompose(stocks['Adj Close'], period = 365)
-season = decomposition.seasonal
+print(n)
 
+
+decomposition = seasonal_decompose(stocks['Adj Close'], period = 253 )
+
+#253 trading days in a year
+
+season = decomposition.seasonal
+decomposition.plot()
+plt.show()
 for i in range(len(season)):
     stocks['Adj Close'][i] -= season[i] 
- 
+
 train_data = stocks[:n]
 
 
@@ -132,74 +147,74 @@ assert exponential_moving_test_normalised.shape[0] == y_test.shape[0]
 
  
 # machine learning libraries to import 
-# import keras
-# import tensorflow as tf
-# from keras.models import Model
-# from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
-# from keras import optimizers
-# from keras.callbacks import History 
-# import numpy as np
-# np.random.seed(4)
-# tf.random.set_seed(4)
+import keras
+import tensorflow as tf
+from keras.models import Model
+from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+from keras import optimizers
+from keras.callbacks import History 
+import numpy as np
+np.random.seed(4)
+tf.random.set_seed(4)
  
-# # print(ohlcv_histories_normalised.shape[1]) 
-# # print(exponential_moving_average_normalised.shape[1])
-# #prepare the 2 features to be inputted into model 
-# lstm_input = Input(shape=(history_points, 1), name='lstm_input')
-# exponential_input = Input(shape=(exponential_moving_average_normalised.shape[1],), name='ema_input')
+# print(ohlcv_histories_normalised.shape[1]) 
+# print(exponential_moving_average_normalised.shape[1])
+#prepare the 2 features to be inputted into model 
+lstm_input = Input(shape=(history_points, 1), name='lstm_input')
+exponential_input = Input(shape=(exponential_moving_average_normalised.shape[1],), name='ema_input')
  
-# #first branch
-# x = LSTM(50, name='lstm_0')(lstm_input)
-# x = Dropout(0.2, name='dropout_0')(x)
-# lstm_branch = Model(inputs=lstm_input, outputs=x)
+#first branch
+x = LSTM(50, name='lstm_0')(lstm_input)
+x = Dropout(0.2, name='dropout_0')(x)
+lstm_branch = Model(inputs=lstm_input, outputs=x)
  
-# # the second branch opreates on the second input
-# y = Dense(32, name='avg_dense_0')(exponential_input)
-# y = Activation("relu", name='avg_relu_0')(y)
-# y = Dropout(0.2, name='avg_dropout_0')(y)
-# average_branch = Model(inputs=exponential_input, outputs=y)
- 
- 
-# # combine the output of the two branches
-# combined = concatenate([lstm_branch.output, average_branch.output], name='concatenate')
- 
-# z = Dense(64, activation="sigmoid", name='dense_pooling')(combined)
-# z = Dense(1, activation="linear", name='dense_out')(z)
- 
-# # our model will accept the inputs of the two branches and then output a single value
-# model = Model(inputs=[lstm_branch.input, average_branch.input], outputs=z)
+# the second branch opreates on the second input
+y = Dense(64, name='avg_dense_0')(exponential_input)
+y = Activation("relu", name='avg_relu_0')(y)
+y = Dropout(0.2, name='avg_dropout_0')(y)
+average_branch = Model(inputs=exponential_input, outputs=y)
  
  
-# adam = optimizers.Adam(lr=0.0005)
+# combine the output of the two branches
+combined = concatenate([lstm_branch.output, average_branch.output], name='concatenate')
  
-# model.compile(optimizer=adam, loss='mse')
-# #fitting of model. note the validation split of 0.1 
-# model.fit(x=[ohlcv_train, exponential_moving_average_normalised], y=y_train, batch_size=32, epochs=100, shuffle=True, validation_split = 0.1) #callbacks = [history]
+z = Dense(128, activation="sigmoid", name='dense_pooling')(combined)
+z = Dense(1, activation="linear", name='dense_out')(z)
+ 
+# our model will accept the inputs of the two branches and then output a single value
+model = Model(inputs=[lstm_branch.input, average_branch.input], outputs=z)
+ 
+ 
+adam = optimizers.Adam(lr=0.0005)
+ 
+model.compile(optimizer=adam, loss='mse')
+#fitting of model. note the validation split of 0.1 
+model.fit(x=[ohlcv_train, exponential_moving_average_normalised], y=y_train, batch_size=32, epochs=150, shuffle=True, validation_split = 0.1) #callbacks = [history]
  
 
-# #predicting of model against test 
-# y_test_predicted = model.predict([ohlcv_test, exponential_moving_test_normalised])
-# y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
+#predicting of model against test 
+y_test_predicted = model.predict([ohlcv_test, exponential_moving_test_normalised])
+y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 
-# assert unscaled_y_test.shape == y_test_predicted.shape
-# real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
-# scaled_mse = real_mse / (np.max(unscaled_y_test) - np.min(unscaled_y_test)) * 100
-# print(scaled_mse)
+assert unscaled_y_test.shape == y_test_predicted.shape
+real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
+scaled_mse = real_mse / (np.max(unscaled_y_test) - np.min(unscaled_y_test)) * 100
+print(scaled_mse)
  
-# plt.gcf().set_size_inches(22, 15, forward=True)
+plt.gcf().set_size_inches(22, 15, forward=True)
  
-# start = 0
-# end = -1
+start = 0
+end = -1
  
-# real = plt.plot(unscaled_y_test[start:end], label='real')
-# pred = plt.plot(y_test_predicted[start:end], label='predicted')
+real = plt.plot(unscaled_y_test[start:end], label='real')
+pred = plt.plot(y_test_predicted[start:end], label='predicted')
 
 # decomposition = seasonal_decompose(stocks['Adj Close'], freq = 365) 
 # season = plt.plot(decomposition, label = "Seasonality")
 
-# #plotting of model  
-# plt.legend(['Real', 'Predicted', 'Seasonality'])
+#plotting of model  
+plt.legend(['Real', 'Predicted'])
  
-# plt.show()
+plt.show()
 
 
