@@ -1,5 +1,5 @@
 ## Project title
-Prediction of stock prices using price deterministic approaches of LSTM and auto regression models
+Prediction of stock prices using price deterministic approaches via LSTM models
 
 ## Motivation
 I always wanted to properly delve into machine/deep learning models, and specifically apply it in an area that I am passionate in. Since I was also interested in stocks,
@@ -11,7 +11,7 @@ Python, Pandas, Tensorflow, Keras, Matplotlib
 
 
 ## Features
-In this project, I attempt to improve upon other predictive models of price prediction by altering the number of layers and through feature engineering, come up with accurate models that can as best as possible mimic the price difference.
+In this project, I attempt to improve upon other predictive models of price prediction by altering the number of layers and through feature engineering, come up with accurate models that can as best as possible mimic the price difference. Most importantly, I iteratively tried to improve on the models while avoiding problems mentioned in many other articles, including look-ahead bias or copying yesterday's price. Concepts of seasonality, validation loss, stationarity with proper data visualisation as well as LSTM stacking/boosting were applied to improve the results. 
 
 
 ## How to use?

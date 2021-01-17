@@ -1,188 +1,131 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from pandas_datareader import data
+from pandas_datareader import data as web
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
 from sklearn import preprocessing
 import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
 
- 
-start_date = datetime(2005, 9, 1)
+start_date = datetime(2010, 9, 1)
 end_date = datetime(2020, 8, 31)
- 
- 
-dataset = []
-test = []
 
-DAYS = 1510 #1762   #original is 2518
-DATA = 2518
+if __name__ == "__main__":
 
-#pulling of google data from csv file
-google = pd.read_csv('D:/didi/ml/stock-project/google_stocks_data.csv')
+    stock_df = pd.read_csv('D:/didi/ml/stock-project/google_stocks_data.csv')
 
- 
-history_points = 50
 
- 
-stocks = google
- 
- 
-stocks.drop(columns = ['Date'], inplace = True, axis = 1)
- 
-test_split = 0.6 # the percent of data to be used for testing
-n = int(stocks.shape[0] * test_split)
- 
-train_data = stocks[:n]
+    new_df = pd.DataFrame({})
 
-# decomposition = seasonal_decompose(stocks['Adj Close'], period = 365)
-# decomposition.seasonal.plot()
-# plt.show() 
+    new_df = stock_df[['Adj Close']].copy()
 
-# print(normalised_data[:,5])
+    train_split = 0.6
 
-#preparing of input and output
-ohlcv_histories_normalised = np.array([train_data['Adj Close'][i  : i + history_points].copy() for i in range(DAYS - history_points)])
-next_day_open_values_normalised = np.array([train_data['Adj Close'][i + history_points].copy() for i in range(DAYS - history_points)])
-next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
- 
- 
-next_day_open_values = np.array([train_data['Adj Close'][i + history_points].copy() for i in range(DAYS - history_points)])
- 
- 
-next_day_open_values = np.expand_dims(next_day_open_values, -1)
- 
+    new_df = new_df.loc[1:]
 
- 
- 
-assert ohlcv_histories_normalised.shape[0] == next_day_open_values_normalised.shape[0]
- 
-#same thing is done for test data. note test and train data must always be separate from one another, ie. the model should never have the test set during the training phase 
-test_data = stocks[n:]
+    train_split = 0.6
 
-print(test_data['Adj Close'][0:DATA - DAYS + 1])
-  
-ohlcv_histories_normalised_test = np.array([test_data['Adj Close'][i  : i + history_points].copy() for i in range(DATA - DAYS - history_points)])
-next_day_open_values_normalised_test = np.array([test_data['Adj Close'][i + history_points].copy() for i in range(DAYS, DATA - history_points)])
-next_day_open_values_normalised_test = np.expand_dims(next_day_open_values_normalised_test, -1)
- 
- 
-next_day_open_values_test = np.array([test_data['Adj Close'][i + history_points].copy() for i in range(DAYS, DATA - history_points)])
- 
-next_day_open_values_test = np.expand_dims(next_day_open_values_test, -1)
- 
-assert ohlcv_histories_normalised_test.shape[0] == next_day_open_values_normalised_test.shape[0]
- 
-ohlcv_train = ohlcv_histories_normalised
-y_train = next_day_open_values_normalised
- 
-ohlcv_test =  ohlcv_histories_normalised_test
-y_test = next_day_open_values_normalised_test
- 
-unscaled_y_test = next_day_open_values_test
- 
-#prepare second feature, exponential moving average
- 
-exponential_moving_average = [] #factors in more weight to recent data rather than a simple moving average which weighs everything equally (not good for stock data )
- 
-multiplier = 2.0 / 51
-print(ohlcv_train)
-sma = np.mean(ohlcv_train[0])
- 
-exponential_moving_average.append(np.array([sma]))
- 
-for i in range(1, len(ohlcv_train)):
-    sma = (train_data['Adj Close'][i] - sma) * multiplier + sma
-    exponential_moving_average.append(np.array([sma]))
- 
-scaler = preprocessing.MinMaxScaler()
-exponential_moving_average_normalised = np.array(exponential_moving_average)
- 
-assert exponential_moving_average_normalised.shape[0] == y_train.shape[0]
- 
- #second feature for test data
-exponential_moving_test = []
-print("HI")
-print(ohlcv_test)
-sma = np.mean(ohlcv_test[0])
- 
-exponential_moving_test.append(np.array([sma]))
- 
-for i in range(1, len(ohlcv_test)):
-    sma = (test_data['Adj Close'][i + DAYS] - sma) * multiplier + sma
-    exponential_moving_test.append(np.array([sma]))
- 
-exponential_moving_test_normalised = np.array(exponential_moving_test)
- 
-assert exponential_moving_test_normalised.shape[0] == y_test.shape[0]
+    data_set_points = 63
 
- 
-# machine learning libraries to import 
-# import keras
-# import tensorflow as tf
-# from keras.models import Model
-# from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
-# from keras import optimizers
-# from keras.callbacks import History 
-# import numpy as np
-# np.random.seed(4)
-# tf.random.set_seed(4)
- 
-# # print(ohlcv_histories_normalised.shape[1]) 
-# # print(exponential_moving_average_normalised.shape[1])
-# #prepare the 2 features to be inputted into model 
-# lstm_input = Input(shape=(history_points, 1), name='lstm_input')
-# exponential_input = Input(shape=(exponential_moving_average_normalised.shape[1],), name='ema_input')
- 
-# #first branch
-# x = LSTM(50, name='lstm_0')(lstm_input)
-# x = Dropout(0.2, name='dropout_0')(x)
-# lstm_branch = Model(inputs=lstm_input, outputs=x)
- 
-# # the second branch opreates on the second input
-# y = Dense(32, name='avg_dense_0')(exponential_input)
-# y = Activation("relu", name='avg_relu_0')(y)
-# y = Dropout(0.2, name='avg_dropout_0')(y)
-# average_branch = Model(inputs=exponential_input, outputs=y)
- 
- 
-# # combine the output of the two branches
-# combined = concatenate([lstm_branch.output, average_branch.output], name='concatenate')
- 
-# z = Dense(64, activation="sigmoid", name='dense_pooling')(combined)
-# z = Dense(1, activation="linear", name='dense_out')(z)
- 
-# # our model will accept the inputs of the two branches and then output a single value
-# model = Model(inputs=[lstm_branch.input, average_branch.input], outputs=z)
- 
- 
-# adam = optimizers.Adam(lr=0.0005)
- 
-# model.compile(optimizer=adam, loss='mse')
-# #fitting of model. note the validation split of 0.1 
-# model.fit(x=[ohlcv_train, exponential_moving_average_normalised], y=y_train, batch_size=32, epochs=30, shuffle=True, validation_split = 0.1) #callbacks = [history]
- 
+    train_indices = int(new_df.shape[0] * train_split)
 
-# #predicting of model against test 
-# y_test_predicted = model.predict([ohlcv_test, exponential_moving_test_normalised])
+    temps = new_df[train_indices:]
+    temps = temps.reset_index()
 
-# assert unscaled_y_test.shape == y_test_predicted.shape
-# real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
-# scaled_mse = real_mse / (np.max(unscaled_y_test) - np.min(unscaled_y_test)) * 100
-# print(scaled_mse)
- 
-# plt.gcf().set_size_inches(22, 15, forward=True)
- 
-# start = 0
-# end = -1
- 
-# real = plt.plot(unscaled_y_test[start:end], label='real')
-# pred = plt.plot(y_test_predicted[start:end], label='predicted')
+    actual = np.array([temps['Adj Close'][i + data_set_points].copy() for i in range(len(temps) - data_set_points)])
+    reference = temps['Adj Close'][data_set_points - 1]
 
-# # decomposition = seasonal_decompose(stocks['Adj Close'], freq = 365) 
-# # season = plt.plot(decomposition, label = "Seasonality")
+    train_data = new_df[:train_indices]
+    test_data = new_df[train_indices:]
+    test_data = test_data.reset_index()
+    test_data = test_data.drop(columns = ['index'])
 
-# #plotting of model  
-# plt.legend(['Real', 'Predicted'])
- 
-# plt.show()
+    train_data.head()
+
+
+    train_arr = np.diff(train_data.loc[:, ['Adj Close']].values, axis = 0)
+    test_arr = np.diff(test_data.loc[:, ['Adj Close']].values, axis = 0)
+
+    print(train_arr)
+
+
+
+    X_train = np.array([train_arr[i : i + data_set_points] for i in range(len(train_arr) - data_set_points)])
+
+    y_train = np.array([train_arr[i + data_set_points] for i in range(len(train_arr) - data_set_points)])
+
+    X_test = np.array([test_arr[i : i + data_set_points] for i in range(len(test_arr) - data_set_points)])
+
+    y_test = np.array([new_df['Adj Close'][i + data_set_points] for i in range(len(test_arr) - data_set_points)])
+
+
+
+    print(X_train.shape)
+    print(y_train.shape)
+    print(X_test.shape)
+    print(y_test.shape)
+
+    print(X_test)
+
+
+    import keras
+    import tensorflow as tf
+    from keras.models import Model
+    from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+    from keras import optimizers
+    from keras.callbacks import History 
+    import numpy as np
+    np.random.seed(4)
+    tf.random.set_seed(4)
+
+    input_for_lstm = Input(shape=(data_set_points, 1), name='input_for_lstm')
+    layer = LSTM(63, name='first_lstm_layer', return_sequences = True)(input_for_lstm)
+    layer = Dropout(0.3, name='first_dropout_layer')(layer)
+    layer = LSTM(32, name='lstm_1')(layer)
+    layer = Dropout(0.2, name='lstm_dropout_1')(layer)
+    layer = Dense(64, name='first_dense_layer')(layer)
+    layer = Activation('sigmoid', name='sigmoid_0')(layer)
+    layer = Dense(1, name='second_dense_layer')(layer)
+    outputs= Activation('linear', name='linear_output')(layer)
+    model = Model(inputs=input_for_lstm, outputs=outputs)
+
+    adam = optimizers.Adam(lr = 0.004)
+
+    model.compile(optimizer=adam, loss='mse')
+    model.fit(x=X_train, y=y_train, batch_size=56, epochs=1, shuffle=True, validation_split = 0.1) #callbacks = [history]
+
+    y_pred = model.predict(X_test)
+
+    print(y_pred)
+
+
+
+    y_pred = y_pred.flatten()
+
+
+    actual = np.array([test_data['Adj Close'][i + data_set_points].copy() for i in range(len(test_data) - data_set_points)])
+
+
+    predicted = []
+    reference = test_data['Adj Close'][data_set_points - 1]
+    print(reference)
+    predicted.append(reference)
+    for i in y_pred:
+        reference += i
+        predicted.append(reference)
+    predicted = np.array(predicted)
+    print(predicted.size)
+    print(actual.size)
+
+    real = plt.plot(actual, label='Actual Price')
+    pred = plt.plot(predicted, label='Predicted Price')
+
+
+
+    plt.legend(['Actual Price', 'Predicted Price'])
+    plt.gcf().set_size_inches(15, 10, forward=True)
+
+    print(predicted)
+
+    
+    plt.show()
