@@ -124,8 +124,8 @@ def plot_buy_sell_trades(y_pct_change, actual):
 
     days_x = np.array([x for x in range(len(y_pct_change))])
 
-    mask1 = y_pct_change > 0.002
-    mask2 = y_pct_change < -0.002
+    mask1 = y_pct_change > 0.001
+    mask2 = y_pct_change < -0.003
     mask1 = mask1.to_numpy()
     mask1 = mask1.flatten()
     mask2 = mask2.to_numpy()
