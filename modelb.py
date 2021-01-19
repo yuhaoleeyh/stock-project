@@ -45,6 +45,7 @@ def train_test_split_preparation(new_df, data_set_points, train_split):
     return X_train, y_train, X_test, y_test, test_data
 
 def lstm_model(X_train, y_train, data_set_points):
+    #Setting of seed
     np.random.seed(4)
     tf.random.set_seed(4)
 
