@@ -8,10 +8,11 @@ from finta import TA
 import keras
 import tensorflow as tf
 from keras.models import Model
-from keras.layers import Dense, Dropout, LSTM, Input, Activation
+from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras import optimizers
 from keras.callbacks import History 
 from sklearn.metrics import mean_squared_error
+import numpy as np
 
 def on_balance_volume_creation(stock_df):
     # Adding of on balance volume to dataframe
@@ -114,15 +115,13 @@ def lstm_model(X_train, y_train, history_points):
     lstm_input = Input(shape=(history_points, 6), name='lstm_input')
 
     inputs = LSTM(21, name='first_layer')(lstm_input)
-    inputs = Dense(16, name='first_dense_layer')(inputs)
     inputs = Dense(1, name='dense_layer')(inputs)
     output = Activation('linear', name='output')(inputs)
 
     model = Model(inputs=lstm_input, outputs=output)
     adam = optimizers.Adam(lr = 0.0008)
-
     model.compile(optimizer=adam, loss='mse')
-    models = model.fit(x=X_train, y=y_train, batch_size=15, epochs=170, shuffle=True, validation_split = 0.1)
+    model.fit(x=X_train, y=y_train, batch_size=15, epochs=170, shuffle=True, validation_split = 0.1)
 
     return model
 
@@ -168,7 +167,7 @@ if __name__ == "__main__":
 
     plt.legend(['Actual Price', 'Predicted Price'])
 
-    print(mean_squared_error(y_test, y_pred, squared = False))
+    print(mean_squared_error(y_test, y_pred))
 
  
     plt.show()    

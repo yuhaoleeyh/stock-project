@@ -13,6 +13,8 @@ from keras import optimizers
 from keras.callbacks import History 
 import numpy as np
 import matplotlib.gridspec as grd
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 
 
 
@@ -46,24 +48,25 @@ def train_test_split_preparation(new_df, data_set_points, train_split):
 
 def lstm_model(X_train, y_train, data_set_points):
     #Setting of seed
-    np.random.seed(4)
-    tf.random.set_seed(4)
+    tf.random.set_seed(20)
+    np.random.seed(10)
 
-    input_for_lstm = Input(shape=(data_set_points, 1), name='input_for_lstm')
+    lstm_input = Input(shape=(data_set_points, 1), name='input_for_lstm')
 
-    layer = LSTM(63, name='first_lstm_layer')(input_for_lstm)
+    inputs = LSTM(21, name='first_layer', return_sequences = True)(lstm_input)
 
-    layer = Dropout(0.1, name='first_dropout_layer')(layer)
-    layer = Dense(64, name='first_dense_layer')(layer)
-    layer = Dense(1, name='second_dense_layer')(layer)
+    inputs = Dropout(0.1, name='first_dropout_layer')(inputs)
+    inputs = LSTM(32, name='lstm_1')(inputs)
+    inputs = Dropout(0.05, name='lstm_dropout_1')(inputs)
+    inputs = Dense(32, name='first_dense_layer')(inputs)
+    inputs = Dense(1, name='dense_layer')(inputs)
+    output = Activation('linear', name='output')(inputs)
 
-    outputs= Activation('linear', name='linear_output')(layer)
-    model = Model(inputs=input_for_lstm, outputs=outputs)
-
-    adam = optimizers.Adam(lr = 0.0038)
+    model = Model(inputs=lstm_input, outputs=output)
+    adam = optimizers.Adam(lr = 0.002)
 
     model.compile(optimizer=adam, loss='mse')
-    model.fit(x=X_train, y=y_train, batch_size=56, epochs=20, shuffle=True, validation_split = 0.1)
+    models = model.fit(x=X_train, y=y_train, batch_size=15, epochs=25, shuffle=True, validation_split = 0.1)
 
     return model
 
@@ -80,8 +83,8 @@ def buy_sell_trades(actual, predicted):
 
     number_of_stocks = 0
 
-    buying_percentage_threshold = 0.001 #as long as we have a 0.5% increase/decrease we buy/sell the stock
-    selling_percentage_threshold = 0.003
+    buying_percentage_threshold = 0.0015 #as long as we have a 0.15% increase/decrease we buy/sell the stock
+    selling_percentage_threshold = 0.0015
 
     for i in range(len(actual) - 1):    
         if y_pct_change['Predictions'][i + 1] > buying_percentage_threshold:
@@ -154,32 +157,20 @@ if __name__ == "__main__":
     #DataReader method in the pandas_datareader library
     # df = web.DataReader("GOOGL", 'yahoo', start_date, end_date)
     
-    #invoke to_csv for df dataframe object from 
-    #DataReader method in the pandas_datareader library
-    
-    #..\first_yahoo_prices_to_csv_demo.csv must not
-    #be open in another app, such as Excel
     
     # df.to_csv('./stock-project/google.csv')
 
     #pulling of google data from csv file
-    stock_df = pd.read_csv('./stock-project/google_stocks_data.csv') #Note this data was pulled on 6 October 2020, some data may have changed since then 
+    stock_df = pd.read_csv('./stock-project/csv_files/google_stocks_data.csv') #Note this data was pulled on 6 October 2020, some data may have changed since then 
 
 
-    train_split = 0.6
+    train_split = 0.7
     
-    data_set_points = 63
+    data_set_points = 21
 
     new_df = stock_df[['Adj Close']].copy()
 
     X_train, y_train, X_test, y_test, test_data = train_test_split_preparation(new_df, data_set_points, train_split)
-
-    # print(X_train.shape)
-    # print(y_train.shape)
-    # print(X_test.shape)
-    # print(y_test.shape)
-
-    # print(X_test)
 
     
     dataset = []
