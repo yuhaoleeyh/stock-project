@@ -44,6 +44,7 @@ def add_technical_indicators(new_df):
     # Adding of technical indicators to data frame (Exponential moving average and Bollinger Band)
     edited_df = pd.DataFrame()
 
+    #edited_df is made in order to generate the order needed for the finta library
     edited_df['open'] = stock_df['Open']
     edited_df['high'] = stock_df['High']
     edited_df['low'] = stock_df['Low']
@@ -56,6 +57,7 @@ def add_technical_indicators(new_df):
 
     new_df['Exponential_moving_average'] = ema.copy()
 
+    #Adding of features to the dataframe
     new_df = pd.concat([new_df, bb], axis = 1)
 
     #Filling of missing data as Bollinger Bands is based on a 21 day EMA
@@ -105,6 +107,7 @@ def train_test_split_preparation(new_df, train_split):
     next_day_close_values = np.array([train_data['Adj Close'][i + history_points].copy() for i in range(len(train_data) - history_points)])
     next_day_close_values = np.expand_dims(next_day_close_values, -1)
 
+    #Fit a normaliser such that we can .inverse_fit later on the output
     y_normaliser.fit(next_day_close_values)
 
      
@@ -147,14 +150,20 @@ if __name__ == "__main__":
     train_split = 0.7
     
     history_points = 21
+
+    #Addition of on balance volume, exponential moving average and bollinger bands.
     
     new_df = on_balance_volume_creation(stock_df)
 
     new_df = add_technical_indicators(new_df)
 
+    #Train test split
+
     X_train, y_train, X_test, y_test, y_reverse_normaliser = train_test_split_preparation(new_df, train_split)
 
     model = lstm_model(X_train, y_train, history_points)
+
+    #Prediction of model, inverse transform to get back the scale of the y values 
 
     y_pred = model.predict(X_test)
     y_pred = y_reverse_normaliser.inverse_transform(y_pred)
@@ -168,6 +177,8 @@ if __name__ == "__main__":
     plt.ylabel('Adjusted Close Price($)')
 
     plt.legend(['Actual Price', 'Predicted Price'])
+
+    #Mean squared error 
 
     print(mean_squared_error(y_test, y_pred, squared = False))
 
