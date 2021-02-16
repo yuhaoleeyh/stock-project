@@ -1,9 +1,8 @@
 ## Project title
-Prediction of stock prices using price deterministic approaches via LSTM models
+Analysis of Stock Price Predictions using LSTM
 
 ## Motivation
-I always wanted to properly delve into machine/deep learning models, and specifically apply it in an area that I am passionate in. Since I was also interested in stocks,
-I wanted to come up with a project which involved these 2 aspects. 
+I always wanted to properly delve into machine/deep learning models, and specifically apply it in an area that I am passionate in. Since I was also interested in stocks and wanted to examine the relationships surrounding the various factors (including seasonality, Bollinger bands and price pressures), I wanted to come up with a project which involved these 2 aspects. 
 
 
 ## Tech/framework used
@@ -15,7 +14,18 @@ In this project, I attempt to improve upon other predictive models of price pred
 
 
 ## How to use?
-To use, ensure that the frameworks and libraries (Pandas, Tensorflow, Keras, Matplotlib) are installed. Once done, one simply needs to just run the code.
+To use, ensure that the frameworks and libraries (Pandas, Tensorflow, Keras, Matplotlib) are installed.
+
+There are 3 models that can be run and tested:
+
+(a) basic_model.py
+The basic model with the base LSTM layers with no tuning (only features added in)
+
+(b) magnitude_model.py
+This model contains the tuned LSTM layers with feature engineering, that is used to predict the magnitude of the price
+
+(c) difference_model.py
+This model contains the tuned and stacked LSTM layers that is used to predict differences that is (a) iteratively added to a base point to generate a predicted graph and (b) added to each actual price at time t to get the predicted price at t + 1.
 
 
 ## License

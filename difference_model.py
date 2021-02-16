@@ -8,16 +8,10 @@ from finta import TA
 import keras
 import tensorflow as tf
 from keras.models import Model
-from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+from keras.layers import Dense, Dropout, LSTM, Input, Activation
 from keras import optimizers
 from keras.callbacks import History 
-import numpy as np
-import matplotlib.gridspec as grd
-import matplotlib.dates as mdates
-import matplotlib.ticker as ticker
-
-
-
+from sklearn.metrics import mean_squared_error
 
 def train_test_split_preparation(new_df, data_set_points, train_split):
     new_df = new_df.loc[1:]
@@ -39,6 +33,11 @@ def train_test_split_preparation(new_df, data_set_points, train_split):
 
     y_train = np.array([train_arr[i + data_set_points] for i in range(len(train_arr) - data_set_points)])
 
+    y_valid = np.array([train_data['Adj Close'][-(int)(len(y_train)/10):].copy()])
+
+    y_valid = y_valid.flatten()
+    y_valid = np.expand_dims(y_valid, -1)
+
     X_test = np.array([test_arr[i : i + data_set_points] for i in range(len(test_arr) - data_set_points)])
 
     y_test = np.array([test_data['Adj Close'][i + data_set_points] for i in range(len(test_arr) - data_set_points)])
@@ -47,7 +46,7 @@ def train_test_split_preparation(new_df, data_set_points, train_split):
     return X_train, y_train, X_test, y_test, test_data
 
 def lstm_model(X_train, y_train, data_set_points):
-    #Setting of seed
+    #Setting of seed (to maintain constant result)
     tf.random.set_seed(20)
     np.random.seed(10)
 
@@ -57,7 +56,7 @@ def lstm_model(X_train, y_train, data_set_points):
 
     inputs = Dropout(0.1, name='first_dropout_layer')(inputs)
     inputs = LSTM(32, name='lstm_1')(inputs)
-    inputs = Dropout(0.05, name='lstm_dropout_1')(inputs)
+    inputs = Dropout(0.05, name='lstm_dropout_1')(inputs) #Dropout layers to prevent overfitting
     inputs = Dense(32, name='first_dense_layer')(inputs)
     inputs = Dense(1, name='dense_layer')(inputs)
     output = Activation('linear', name='output')(inputs)
@@ -66,7 +65,7 @@ def lstm_model(X_train, y_train, data_set_points):
     adam = optimizers.Adam(lr = 0.002)
 
     model.compile(optimizer=adam, loss='mse')
-    models = model.fit(x=X_train, y=y_train, batch_size=15, epochs=25, shuffle=True, validation_split = 0.1)
+    model.fit(x=X_train, y=y_train, batch_size=15, epochs=25, shuffle=True, validation_split = 0.1)
 
     return model
 
@@ -89,12 +88,14 @@ def buy_sell_trades(actual, predicted):
     for i in range(len(actual) - 1):    
         if y_pct_change['Predictions'][i + 1] > buying_percentage_threshold:
             for j in range(100, 0, -1):
+                #Buying of stock
                 if (money >= j * actual[i]):
                     money -= j * actual[i]
                     number_of_stocks += j
                     break
         elif  y_pct_change['Predictions'][i + 1] < -selling_percentage_threshold:
             for j in range(100, 0, -1):
+                #Selling of stock
                 if (number_of_stocks >= j):
                     money += j * actual[i]
                     number_of_stocks -= j
@@ -102,47 +103,34 @@ def buy_sell_trades(actual, predicted):
 
     money += number_of_stocks * actual[len(actual) - 1]
 
-    print(money)
-    print(left)
+    print(money) #Money if we traded
+    print(left)  #Money if we just bought as much at the start and sold near the end (Buy and hold)
 
     return y_pct_change
 
 
-def plot_buy_sell_trades(y_pct_change, actual):
-    plt.figure()
-    gs = grd.GridSpec(2, 1, height_ratios=[7,5], wspace=0.1)
+def generate_predicted_result_based_on_previous_actual(actual, y_pred): 
+    temp_actual = actual[:-1]
 
-    plt.gcf().set_size_inches(16, 10, forward=True)
+    #Adding each actual price at time t with the predicted difference to get a predicted price at time t + 1
+    new = np.add(temp_actual, y_pred)
 
+    plt.gcf().set_size_inches(12, 8, forward=True)
+    plt.title('Plot of real price and predicted price against number of days for test set')
+    plt.xlabel('Number of days')
+    plt.ylabel('Adjusted Close Price($)')
 
-    plt.subplot(gs[1])
+    plt.plot(actual[1:], label='Actual Price')
+    plt.plot(new, label='Predicted Price')
 
-    plt.plot(y_pct_change)
-    # p = ax.imshow(y_pct_change,interpolation='nearest',aspect='auto') # set the aspect ratio to auto to fill the space. 
-    plt.xlabel('Day')
-    plt.ylabel('Percentage change')
-    # plt.xlim(1,140)
-    # lists = [False, True, True]
-    # fig, ax1 = plt.subplots()
-    # ax.plot([1,2, 3], lists,'rv', size = 400)
+    print(mean_squared_error(actual[1:], new, squared = False))
 
-    days_x = np.array([x for x in range(len(y_pct_change))])
+    #plotting of model  
+    plt.legend(['Actual Price', 'Predicted Price'])
 
-    mask1 = y_pct_change > 0.001
-    mask2 = y_pct_change < -0.003
-    mask1 = mask1.to_numpy()
-    mask1 = mask1.flatten()
-    mask2 = mask2.to_numpy()
-    mask2 = mask2.flatten()
-
-    # color red/green bar in it's own axis
-    plt.subplot(gs[0])
-    plt.bar(days_x[mask1], actual[mask1], color = "green")
-    plt.bar(days_x[mask2], actual[mask2], color = "red")
-    plt.xlabel('Day')
-    plt.ylabel('Price of Google stock')
-
+    
     plt.show()
+
 
 
 
@@ -170,30 +158,29 @@ if __name__ == "__main__":
 
     new_df = stock_df[['Adj Close']].copy()
 
+    #Train test split
+
     X_train, y_train, X_test, y_test, test_data = train_test_split_preparation(new_df, data_set_points, train_split)
-
     
-    dataset = []
-    test = []
-    
-
+    #Training of model
     model = lstm_model(X_train, y_train, data_set_points)
 
+    #prediction of model
     y_pred = model.predict(X_test)
-
-    print(y_pred)
 
     y_pred = y_pred.flatten()
 
-
+    #actual represents the test set's actual stock prices
     actual = np.array([test_data['Adj Close'][i + data_set_points].copy() for i in range(len(test_data) - data_set_points)])
 
+    #reference represents the stock price of the point before the prediction, so we can iteratively add the difference
     reference = test_data['Adj Close'][data_set_points - 1]
 
     predicted = []
 
     predicted.append(reference)
 
+    #adding of difference and appending to the list
     for i in y_pred:
         reference += i
         predicted.append(reference)
@@ -210,9 +197,10 @@ if __name__ == "__main__":
     
     plt.show()
 
+    #Use of an algorithm to buy and sell if it exceeds the threshold
     y_pct_change = buy_sell_trades(actual, predicted)
 
-    plot_buy_sell_trades(y_pct_change, actual)
+    generate_predicted_result_based_on_previous_actual(actual, y_pred)
 
 
 

@@ -42,7 +42,7 @@ if __name__ == "__main__":
     df = web.DataReader("FB", 'yahoo', start_date, end_date)
 
     
-    df.to_csv('google_stocks_data.csv')
+    # df.to_csv('google_stocks_data.csv')
 
     #pulling of google data from csv file
     stock_df = pd.read_csv('./stock-project/csv_files/google_stocks_data.csv')

@@ -24,6 +24,7 @@ def on_balance_volume_creation(stock_df):
     new_balance_volume = [0]
     tally = 0
 
+    #Adding the volume if the 
     for i in range(1, len(new_df)):
         if (stock_df['Adj Close'][i] > stock_df['Adj Close'][i - 1]):
             tally += stock_df['Volume'][i]
@@ -57,6 +58,7 @@ def add_technical_indicators(new_df):
 
     new_df = pd.concat([new_df, bb], axis = 1)
 
+    #Filling of missing data as Bollinger Bands is based on a 21 day EMA
 
     for i in range(19):
         new_df['BB_MIDDLE'][i] = new_df.loc[i, 'Exponential_moving_average']
@@ -83,6 +85,10 @@ def train_test_split_preparation(new_df, train_split):
     test_data = test_data.reset_index()
     test_data = test_data.drop(columns = ['index'])
 
+    #normalise the data
+    # We do a fit_transform on the train_data in order to ensure that all trained data is scaled between 0 and 1. 
+    # After that, we do a .transform on the test_data to transform the test data based on the normalisation of the trained data.
+
     normaliser = preprocessing.MinMaxScaler()
     train_normalised_data = normaliser.fit_transform(train_data)
 
@@ -91,6 +97,8 @@ def train_test_split_preparation(new_df, train_split):
     X_train = np.array([train_normalised_data[:,0:][i : i + history_points].copy() for i in range(len(train_normalised_data) - history_points)])
 
     y_train = np.array([train_normalised_data[:,0][i + history_points].copy() for i in range(len(train_normalised_data) - history_points)])
+
+    #expand_dims is used to prepare the dataset for the LSTM model
     y_train = np.expand_dims(y_train, -1)
 
     y_normaliser = preprocessing.MinMaxScaler()
@@ -123,7 +131,7 @@ def lstm_model(X_train, y_train, history_points):
     adam = optimizers.Adam(lr = 0.0008)
 
     model.compile(optimizer=adam, loss='mse')
-    models = model.fit(x=X_train, y=y_train, batch_size=15, epochs=170, shuffle=True, validation_split = 0.1)
+    model.fit(x=X_train, y=y_train, batch_size=15, epochs=170, shuffle=True, validation_split = 0.1)
 
     return model
 
