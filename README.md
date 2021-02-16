@@ -6,7 +6,7 @@ I always wanted to properly delve into machine/deep learning models, and specifi
 
 
 ## Tech/framework used
-Python, Pandas, Tensorflow, Keras, Matplotlib, Finta
+Python, Pandas, Tensorflow, Keras, Matplotlib, Finta, Seaborn
 
 
 ## Features
@@ -14,7 +14,7 @@ In this project, I attempt to improve upon other predictive models of price pred
 
 
 ## How to use?
-To use, ensure that the frameworks and libraries (Pandas, Tensorflow, Keras, Matplotlib, Finta) are installed.
+To use, ensure that the frameworks and libraries (Pandas, Tensorflow, Keras, Matplotlib, Finta, Seaborn) are installed.
 
 There are 3 models that can be run and tested:
 

@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 from pandas_datareader import data as web
 from datetime import datetime
 import plotly.express as px
+import seaborn as sns
 
-def read_data_frame(stocks):
+def read_data_frame(stock_df):
     print(stock_df.head())
     print(stock_df.describe())
 
 
-def plot_visualisation(stocks):
-
+def plot_visualisation(stock_df):
     #Scatterplot of adjusted close price
     stock_df['Date'] = pd.to_datetime(stock_df['Date'])
 
@@ -22,14 +22,12 @@ def plot_visualisation(stocks):
     #Plotting correlation plot
 
     float_df = stock_df.select_dtypes(exclude = "object")
-
     corr = float_df.corr()
+    ax = plt.axes()
+    sns.heatmap(corr, xticklabels=corr.columns, yticklabels=corr.columns, annot=True, cmap=sns.diverging_palette(220, 20, as_cmap=True), ax = ax)
 
-    fig = px.imshow(corr)
-
-    fig.update_xaxes(side = "top")
-
-    fig.show()
+    ax.set_title("Correlation of various features")
+    plt.show()
 
 
 
