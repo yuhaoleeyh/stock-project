@@ -73,6 +73,7 @@ def add_technical_indicators(new_df):
 
 
 def train_test_split_preparation(new_df, train_split):
+    new_df = new_df.loc[1:]
     #Preparation of train test set.
     train_indices = int(new_df.shape[0] * train_split)
 
@@ -132,16 +133,8 @@ def lstm_model(X_train, y_train, history_points):
 if __name__ == "__main__":
     start_date = datetime(2010, 9, 1)
     end_date = datetime(2020, 8, 31)
-    
 
-    #invoke to_csv for df dataframe object from 
-    #DataReader method in the pandas_datareader library
-    # df = web.DataReader("GOOGL", 'yahoo', start_date, end_date)
-    
-    # df.to_csv('google_stocks_data.csv')
-
-    #pulling of google data from csv file
-    stock_df = pd.read_csv('./stock-project/csv_files/google_stocks_data.csv')   #Note this data was pulled on 6 October 2020, some data may have changed since then 
+    stock_df = pd.read_csv('D:/didi/ml/stock-project/csv_files/google_stocks_data.csv')
 
     train_split = 0.7
     

@@ -40,18 +40,12 @@ if __name__ == "__main__":
     #invoke to_csv for df dataframe object from 
     #DataReader method in the pandas_datareader library
     df = web.DataReader("FB", 'yahoo', start_date, end_date)
-    
-    #invoke to_csv for df dataframe object from 
-    #DataReader method in the pandas_datareader library
-    
-    #..\first_yahoo_prices_to_csv_demo.csv must not
-    #be open in another app, such as Excel
 
     
     df.to_csv('google_stocks_data.csv')
 
     #pulling of google data from csv file
-    stock_df = pd.read_csv('google_stocks_data.csv')
+    stock_df = pd.read_csv('./stock-project/csv_files/google_stocks_data.csv')
 
     read_data_frame(stock_df)
 
