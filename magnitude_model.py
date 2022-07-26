@@ -145,7 +145,7 @@ if __name__ == "__main__":
     start_date = datetime(2010, 9, 1)
     end_date = datetime(2020, 8, 31)
 
-    stock_df = pd.read_csv('D:/didi/ml/stock-project/csv_files/google_stocks_data.csv')
+    stock_df = pd.read_csv('./csv_files/google_stocks_data.csv')
 
     train_split = 0.7
     

@@ -4,6 +4,10 @@ Analysis of Stock Price Predictions using LSTM
 ## Motivation
 I always wanted to properly delve into machine/deep learning models, and specifically apply it in an area that I am passionate in. Since I was also interested in stocks and wanted to examine the relationships surrounding the various factors (including seasonality, Bollinger bands and price pressures), I wanted to come up with a project which involved these 2 aspects. 
 
+Link to medium article: https://medium.com/analytics-vidhya/analysis-of-stock-price-predictions-using-lstm-models-f993faa524c4
+
+Published in Analytics Vidhya, the 2nd largest data science community in the world 
+
 
 ## Tech/framework used
 Python, Pandas, Tensorflow, Keras, Matplotlib, Finta, Seaborn
@@ -14,7 +18,7 @@ In this project, I attempt to improve upon other predictive models of price pred
 
 
 ## How to use?
-To use, ensure that the frameworks and libraries (Pandas, Tensorflow, Keras, Matplotlib, Finta, Seaborn) are installed.
+To use, run: pip install -r requirements.txt to install all required dependencies.
 
 There are 3 models that can be run and tested:
 

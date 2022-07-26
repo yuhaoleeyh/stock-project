@@ -149,7 +149,7 @@ if __name__ == "__main__":
     # df.to_csv('./stock-project/google.csv')
 
     #pulling of google data from csv file
-    stock_df = pd.read_csv('./stock-project/csv_files/google_stocks_data.csv') #Note this data was pulled on 6 October 2020, some data may have changed since then 
+    stock_df = pd.read_csv('./csv_files/google_stocks_data.csv') #Note this data was pulled on 6 October 2020, some data may have changed since then 
 
 
     train_split = 0.7
